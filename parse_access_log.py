@@ -1,0 +1,142 @@
+#!/usr/bin/env python3
+
+import os
+import sys
+import argparse
+import re
+import csv
+from datetime import datetime, timezone
+import pytz
+
+regex_patterns = [
+    "wp-login\.php",
+    "^\/database",
+    "^\/backups?"
+    "^\/te?mp\/",
+    "^\/boaform\/",
+    "^\/admin\/",
+    "^\/\.git\/config",
+    "^\/HNAP1\/",
+    "^\/showLogin\.cc",
+    "^MGLNDD_([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3})_443",
+    "^\/ads\.txt",
+    "^\/[_2]?phpmy-?admin",
+    "^\/pma",
+    "^\/phpmy",
+    "^\/dbadmin",
+    "^\/sql",
+    "^\/db",
+    "^\/mysql",
+    "^\/shopdb",
+    "^\/admin",
+    "^\/program",
+    "^\/phppma",
+    "^\/administrator",
+    "^\/wp-content",
+    "^\/\.bash_history",
+    "^\/\.ssh\/id_rsa",
+    "^\/\.htpasswd~?",
+    "^\/dump",
+    "^\/[^\/]+?\.sql",
+    "^\/setup\.cgi",
+    "^\/[^\/]+?\.zip",
+    "^\/[^\/]+?\.7z",
+    "^\/[^\/]+?\.tar\.gz",
+    "^\/owa\/",
+    "^\/ecp\/",
+    "^\\\\x.{2}\\\\x.{2}",
+    "^\/0bef",
+    "^\/private",
+    "^\/secret",
+    "^\/app\/",
+    "admin\.php",
+    "^\/vendor\/phpunit",
+    "^\?.*?=",
+    "adminer\.php"
+    "^\/solr",
+    "^\/spog",
+    "^\/cgi-bin",
+    "^\/index\.php",
+    "^https?:",
+    "^\/dispatch\.asp",
+    "wp-includes",
+    "^\/wordpress",
+    "^\/website",
+    "system_api\.php",
+    "clients_live\.php",
+    "live\.php",
+    "^\/console",
+    "phpinfo",
+]
+
+def malicious_request(path):
+    for pattern in regex_patterns:
+        result = re.match(pattern, path, re.IGNORECASE)
+        if result: return True
+
+    return False
+
+
+def main(arguments):
+
+    parser = argparse.ArgumentParser(
+        description=__doc__,
+        formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument('infile', help="Input file", type=argparse.FileType('r'))
+    parser.add_argument('-o', '--outfile', help="Output file",
+                        default=sys.stdout, type=argparse.FileType('w'))
+
+    args = parser.parse_args(arguments)
+
+    # Define field names.
+    fieldnames = ['IP', 'Categories', 'Comment', 'ReportDate']
+    # Begin CSV output.
+    writer = csv.DictWriter(args.outfile, fieldnames=fieldnames)
+    writer.writeheader()
+
+     # Initialize empty list to hold addresses
+    ipv4_addresses = list()
+
+    for line in args.infile:
+        # !! Match this format to your system's format.
+        ipv4 = "([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3})"
+        timestamp = "([0-9]{1,2}\/[A-Za-z]{1,3}\/[0-9]{1,4}:[0-9]{2}:[0-9]{2}:[0-9]{2})"
+        comment = "(\"(GET|POST|PUT|DELETE|HEAD|CONNECT|TRACE|PATCH|OPTIONS) (.*?) HTTP\/[0-9]{1,3}\.[0-9]{1,3}\")"
+
+        # The regex of the line we're looking for, built up from component regexps.
+        combined_re = ipv4 + ".*?" + timestamp + ".*?" + comment
+
+        # Run the regexp.
+        matches = re.findall(combined_re, line)
+        # If this line is in the format we're looking for,
+        if matches:
+            # Pull the tuple out of the list.
+            matches_flat = matches[0]
+
+            # Remove duplicate addresses from the report.
+            if matches_flat[0] not in ipv4_addresses:
+                ipv4_addresses.append(matches_flat[0])
+            else:
+                continue
+
+            if not malicious_request(matches_flat[4]):
+                continue
+            attack_datetime = datetime.strptime(matches_flat[1], '%d/%b/%Y:%H:%M:%S')
+            # !! Set tzinfo to your system timezone using timezone.
+            my_tz = pytz.timezone('Europe/Helsinki')
+            attack_datetime = attack_datetime.replace(tzinfo=my_tz)
+
+            # Format to ISO 8601 to make it universal and portable.
+            attack_datetime_iso = attack_datetime.isoformat()
+
+            # We'll add the categories column statically at this step.
+            # Output as a CSV row.
+            writer.writerow({
+                'IP': matches_flat[0],
+                'Categories': "21",
+                'Comment': "Probing " + matches_flat[2],
+                'ReportDate': attack_datetime_iso
+            })
+
+if __name__ == '__main__':
+    sys.exit(main(sys.argv[1:]))
