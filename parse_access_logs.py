@@ -76,17 +76,47 @@ def malicious_request(path):
 
     return False
 
+def parse_date(s):
+    c = s.count('-')
+    result = None
+
+    try:
+        if c == 2:
+            result = datetime.strptime(s, "%Y-%m-%d")
+        elif c == 1:
+            result = datetime.strptime(s, "%Y-%m")
+        elif c == 0:
+            result = datetime.strptime(s, "%Y")
+    except ValueError:
+        print("invalid date\nformat: %Y-%m-%d")
+
+    return (result, c)
+
+def dates_equal(d1, d2, dtype):
+    if dtype == 2 and d1.date() == d2.date(): return True
+    elif dtype == 1 and d1.month == d2.month and d1.year == d2.year: return True
+    elif dtype == 0 and d1.year == d2.year: return True
+
+    return False
+
 
 def main(arguments):
-
     parser = argparse.ArgumentParser(
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('infile', help="Input file", type=argparse.FileType('r'))
     parser.add_argument('-o', '--outfile', help="Output file",
                         default=sys.stdout, type=argparse.FileType('w'))
+    parser.add_argument('-d', '--date', default=False, help="Date to check")
 
     args = parser.parse_args(arguments)
+
+    dtype = None
+    date = None
+
+    if args.date:
+        date, dtype = parse_date(args.date)
+        if date == None: sys.exit(1)
 
     # Define field names.
     fieldnames = ['IP', 'Categories', 'Comment', 'ReportDate']
@@ -113,6 +143,9 @@ def main(arguments):
             # Pull the tuple out of the list.
             matches_flat = matches[0]
 
+            attack_datetime = datetime.strptime(matches_flat[1], '%d/%b/%Y:%H:%M:%S')
+            if dtype and not dates_equal(date, attack_datetime, dtype): continue
+
             # Remove duplicate addresses from the report.
             if matches_flat[0] not in ipv4_addresses:
                 ipv4_addresses.append(matches_flat[0])
@@ -121,7 +154,7 @@ def main(arguments):
 
             if not malicious_request(matches_flat[4]):
                 continue
-            attack_datetime = datetime.strptime(matches_flat[1], '%d/%b/%Y:%H:%M:%S')
+
             # !! Set tzinfo to your system timezone using timezone.
             my_tz = pytz.timezone('Europe/Helsinki')
             attack_datetime = attack_datetime.replace(tzinfo=my_tz)
