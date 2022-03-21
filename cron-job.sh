@@ -6,7 +6,7 @@ if [ "$#" -ne 1 ]; then
     exit 1
 fi
 
-today=`date +%Y-%m-%d`
+today=`date -d '-1 day' +%Y-%m-%d`
 
 # Parse access log
 python parse_access_logs.py /var/log/nginx/access.log -o access.csv -d $today
