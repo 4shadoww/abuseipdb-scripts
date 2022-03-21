@@ -16,7 +16,7 @@ if [[ $? = 0 && `wc -l<access.csv` -ge 2  ]]; then
 fi
 
 # Parse auth log
-python parse_auth_logs.py /var/log//auth.log -o auth.csv -d $today
+python parse_auth_logs.py /var/log/auth.log -o auth.csv -d $today
 
 if [[ $?  = 0 && `wc -l<auth.csv` -ge 2 ]]; then
     python send-bulk.py $1 auth.csv
