@@ -18,6 +18,16 @@ fi
 # Parse auth log
 python parse_auth_logs.py /var/log/auth.log -o auth.csv -d $today
 
-if [[ $?  = 0 && `wc -l<auth.csv` -ge 2 ]]; then
+if [[ $? = 0 && `wc -l<auth.csv` -ge 2 ]]; then
     python send-bulk.py $1 auth.csv
+fi
+
+# Check ip scans
+lpsd -i /var/log/kern.log -t 60 -s 2 -csv -o portscans.csv -d $today
+
+if [[ $? = 0 ]]; then
+    python parse_portscan_logs.py portscans.csv -o scans.csv
+    if [[ $? = 0 && `wc -l<scans.csv` -ge 2 ]]; then
+        python send-bulk.py $1 scans.csv
+    fi
 fi
