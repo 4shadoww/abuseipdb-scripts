@@ -23,7 +23,7 @@ if [[ $? = 0 && `wc -l<auth.csv` -ge 2 ]]; then
 fi
 
 # Check ip scans
-lpsd -i /var/log/kern.log -t 60 -s 2 -csv -o portscans.csv -d $today
+lpsd -i /var/log/kern.log.1,/var/log/kern.log -t 60 -s 2 -csv -o portscans.csv -d $today
 
 if [[ $? = 0 ]]; then
     python parse_portscan_logs.py portscans.csv -o scans.csv
