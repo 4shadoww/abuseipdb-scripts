@@ -61,7 +61,7 @@ def main(arguments):
 
     for line in args.infile:
         # !! Match this format to your system's format.
-        timestamp = "([a-zA-Z]+ [0-9]+ [0-9]+:[0-9]+:[0-9]+)"
+        timestamp = "([a-zA-Z]+ +?[0-9]+ [0-9]+:[0-9]+:[0-9]+)"
         ipv4 = "([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3})"
         comment = "(Invalid user [a-zA-Z0-9]+ from " + ipv4 + " port [0-9]+)"
 
