@@ -67,6 +67,7 @@ regex_patterns = [
     "live\.php",
     "^\/console",
     "phpinfo",
+    "editBlackAndWhiteList"
 ]
 
 def malicious_request(path):
