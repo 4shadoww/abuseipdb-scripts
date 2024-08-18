@@ -10,14 +10,14 @@ today=`date -d '-1 day' +%Y-%m-%d`
 today_no_year=`date -d '-1 day' +%m-%d`
 
 # Parse access log
-python parse_access_logs.py /var/log/nginx/access.log -o access.csv -d $today
+python parse_access_logs.py /var/log/nginx/access.log.1 -o access.csv -d $today
 
 if [[ $? = 0 && `wc -l<access.csv` -ge 2  ]]; then
     python send-bulk.py $1 access.csv
 fi
 
 # Parse auth log
-python parse_auth_logs.py /var/log/auth.log -o auth.csv -d $today
+python parse_auth_logs.py /var/log/auth.log.1 -o auth.csv -d $today
 
 if [[ $? = 0 && `wc -l<auth.csv` -ge 2 ]]; then
     python send-bulk.py $1 auth.csv
