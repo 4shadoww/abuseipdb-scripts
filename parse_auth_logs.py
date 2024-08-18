@@ -61,9 +61,9 @@ def main(arguments):
 
     for line in args.infile:
         # !! Match this format to your system's format.
-        timestamp = "([a-zA-Z]+ +?[0-9]+ [0-9]+:[0-9]+:[0-9]+)"
-        ipv4 = "([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3})"
-        comment = "(Invalid user [a-zA-Z0-9]+ from " + ipv4 + " port [0-9]+)"
+        timestamp = r"([0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2})"
+        ipv4 = r"([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3})"
+        comment = r"(Invalid user [a-zA-Z0-9]+ from " + ipv4 + " port [0-9]+)"
 
         # The regex of the line we're looking for, built up from component regexps.
         combined_re = timestamp + " .* " + comment
@@ -75,7 +75,7 @@ def main(arguments):
             # Pull the tuple out of the list.
             matches_flat = matches[0]
 
-            attack_datetime = datetime.strptime(matches_flat[0], '%b %d %H:%M:%S')
+            attack_datetime = datetime.strptime(matches_flat[0], '%Y-%m-%dT%H:%M:%S')
             attack_datetime = attack_datetime.replace(datetime.now().year)
 
             if dtype and not dates_equal(date, attack_datetime, dtype): continue
