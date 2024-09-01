@@ -66,7 +66,7 @@ def main(arguments):
         comment = r"(Invalid user [a-zA-Z0-9]+ from " + ipv4 + " port [0-9]+)"
 
         # The regex of the line we're looking for, built up from component regexps.
-        combined_re = timestamp + " .* " + comment
+        combined_re = timestamp + ".*" + comment
 
         # Run the regexp.
         matches = re.findall(combined_re, line)
