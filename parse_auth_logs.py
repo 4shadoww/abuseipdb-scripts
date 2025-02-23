@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
 
-import os
 import sys
 import argparse
 import re
 import csv
-from datetime import datetime, timezone
+from datetime import datetime
 import pytz
 
 def parse_date(s):
